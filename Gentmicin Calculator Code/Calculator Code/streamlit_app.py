@@ -46,16 +46,21 @@ with st.form("inputs"):
         )
 
     submitted = st.form_submit_button("Calculate")
-    cleared = st.form_submit_button("Clear")
+    # Use a callback for Clear so session state changes happen in a controlled callback context
+    def _clear_inputs():
+        st.session_state["weight_kg"] = 70.0
+        st.session_state["height_cm"] = 170.0
+        st.session_state["age_years"] = 40
+        st.session_state["sex"] = "male"
+        st.session_state["creatinine_umol_per_l"] = 100.0
+        # Remove any stored report/result indicators
+        for k in ["_gentamicin_result", "gentamicin_report"]:
+            if k in st.session_state:
+                del st.session_state[k]
+        # Rerun to immediately reflect cleared UI
+        st.experimental_rerun()
 
-# Clear: reset inputs to defaults
-if cleared:
-    st.session_state["weight_kg"] = 70.0
-    st.session_state["height_cm"] = 170.0
-    st.session_state["age_years"] = 40
-    st.session_state["sex"] = "male"
-    st.session_state["creatinine_umol_per_l"] = 100.0
-    st.experimental_rerun()
+    _ = st.form_submit_button("Clear", on_click=_clear_inputs)
 
 if submitted:
     try:
