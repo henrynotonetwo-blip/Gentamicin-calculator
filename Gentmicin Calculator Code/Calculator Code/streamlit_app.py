@@ -13,31 +13,66 @@ calc = GentamicinCalculator()
 with st.form("inputs"):
     col1, col2 = st.columns(2)
     with col1:
-        weight_kg = st.number_input("Weight (kg)", min_value=0.0, value=70.0, step=0.1, format="%.1f")
-        height_cm = st.number_input("Height (cm)", min_value=0.0, value=170.0, step=0.1, format="%.1f")
-        age_years = st.number_input("Age (years)", min_value=0, value=40, step=1)
+        weight_kg = st.number_input(
+            "Weight (kg)",
+            min_value=0.0,
+            value=st.session_state.get("weight_kg", 70.0),
+            step=0.1,
+            format="%.1f",
+            key="weight_kg",
+        )
+        height_cm = st.number_input(
+            "Height (cm)",
+            min_value=0.0,
+            value=st.session_state.get("height_cm", 170.0),
+            step=0.1,
+            format="%.1f",
+            key="height_cm",
+        )
+        age_years = st.number_input(
+            "Age (years)", min_value=0, value=st.session_state.get("age_years", 40), step=1, key="age_years"
+        )
     with col2:
-        sex = st.selectbox("Sex", ["male", "female"], index=0)
+        sex = st.selectbox(
+            "Sex", ["male", "female"], index=0 if st.session_state.get("sex", "male") == "male" else 1, key="sex"
+        )
         creatinine_umol_per_l = st.number_input(
-            "Serum creatinine (µmol/L)", min_value=0.0, value=100.0, step=1.0, format="%.1f"
+            "Serum creatinine (µmol/L)",
+            min_value=0.0,
+            value=st.session_state.get("creatinine_umol_per_l", 100.0),
+            step=1.0,
+            format="%.1f",
+            key="creatinine_umol_per_l",
         )
 
     submitted = st.form_submit_button("Calculate")
+    cleared = st.form_submit_button("Clear")
+
+# Clear: reset inputs to defaults
+if cleared:
+    st.session_state["weight_kg"] = 70.0
+    st.session_state["height_cm"] = 170.0
+    st.session_state["age_years"] = 40
+    st.session_state["sex"] = "male"
+    st.session_state["creatinine_umol_per_l"] = 100.0
+    st.experimental_rerun()
 
 if submitted:
     try:
         result = calc.calculate_dose(
-            float(weight_kg),
-            float(height_cm),
-            int(age_years),
-            str(sex),
-            float(creatinine_umol_per_l),
+            float(st.session_state["weight_kg"]),
+            float(st.session_state["height_cm"]),
+            int(st.session_state["age_years"]),
+            str(st.session_state["sex"]),
+            float(st.session_state["creatinine_umol_per_l"]),
         )
 
         st.subheader("Result")
 
         if "dose_mg" in result:
-            st.success(f"Recommended dose: **{result['dose_mg']} mg** ({result.get('dose_basis', '')})")
+            st.success(
+                f"Recommended dose: **{result['dose_mg']} mg** ({result.get('dose_basis', '')})"
+            )
         else:
             st.warning(result.get("advisory", "No dose calculated."))
 
@@ -64,7 +99,56 @@ if submitted:
                 }
             )
 
-        st.caption("Dose rounding: nearest 10 mg (half-up), capped at 480 mg per current tool settings.")
+        st.caption(
+            "Dose rounding: nearest 10 mg (half-up), capped at 480 mg per current tool settings."
+        )
+
+        # Build a textual report like the desktop app
+        report_lines = []
+        report_lines.append("GENTAMICIN DOSAGE CALCULATOR")
+        report_lines.append("============================")
+        report_lines.append("Patient Details:")
+        report_lines.append(
+            f"- Weight: {st.session_state['weight_kg']:.1f} kg ({c['weight_lbs']:.1f} lbs)"
+        )
+        report_lines.append(
+            f"- Height: {st.session_state['height_cm']:.1f} cm ({c['height_feet']}'{round(c['height_inches_remainder'])}\")"
+        )
+        report_lines.append(f"- Age: {st.session_state['age_years']} years")
+        report_lines.append(f"- Sex: {str(st.session_state['sex']).capitalize()}")
+        report_lines.append(
+            f"- Serum Creatinine: {st.session_state['creatinine_umol_per_l']:.1f} µmol/L"
+        )
+        report_lines.append("")
+        report_lines.append("Calculations:")
+        report_lines.append(f"- BMI: {result['bmi']:.1f} kg/m² ({result['pathway']})")
+
+        if "ibw" in result:
+            report_lines.append(f"- Height (for IBW): {result['height_inches']:.1f} inches")
+            report_lines.append(f"- IBW: {result['ibw']:.1f} kg")
+
+        report_lines.append(f"- Dosing Weight: {result['dosing_weight']:.1f} kg")
+        report_lines.append(f"- Creatinine Clearance: {result['creatinine_clearance']:.1f} ml/min")
+
+        if "dose_mg" in result:
+            basis = result.get("dose_basis", "")
+            report_lines.append(f"- Recommended Dose: {result['dose_mg']} mg (nearest 10 mg; {basis})")
+        else:
+            report_lines.append(f"- Recommendation: {result.get('advisory')}")
+
+        report_lines.append("")
+        report_lines.append(
+            "MEDICAL DISCLAIMER: This calculator is for educational/reference purposes only."
+        )
+        report_lines.append(
+            "Always consult qualified healthcare professionals for actual medical decisions."
+        )
+
+        report = "\n".join(report_lines)
+
+        st.subheader("Report")
+        st.code(report, language="text")
+        st.download_button("Download report", report, file_name="gentamicin_report.txt", mime="text/plain")
 
     except ValueError as e:
         st.error(str(e))
