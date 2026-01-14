@@ -1,6 +1,6 @@
 import streamlit as st
 
-from calculator import GentamicinCalculator
+from gentamicin_calculator import GentamicinCalculator
 
 
 st.set_page_config(page_title="Gentamicin Dose Calculator", layout="centered")
