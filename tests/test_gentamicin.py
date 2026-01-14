@@ -1,16 +1,7 @@
 import math
-import pathlib
-import sys
 import pytest
 
-
-# Ensure the module directory is importable (Calculator Code/)
-PROJECT_DIR = pathlib.Path(__file__).resolve().parents[1] / "Calculator Code"
-if str(PROJECT_DIR) not in sys.path:
-    sys.path.insert(0, str(PROJECT_DIR))
-
-
-from calculator import GentamicinCalculator  # noqa: E402
+from gentamicin_calculator import GentamicinCalculator
 
 
 def test_normal_bmi_male_crcl_gt30():
