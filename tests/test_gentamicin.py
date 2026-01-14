@@ -1,5 +1,12 @@
 import math
+import sys
+import pathlib
 import pytest
+
+# Ensure project root is importable so the package can be imported during tests
+PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from gentamicin_calculator import GentamicinCalculator
 
