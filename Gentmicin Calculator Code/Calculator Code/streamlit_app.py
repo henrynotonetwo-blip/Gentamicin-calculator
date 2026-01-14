@@ -57,10 +57,15 @@ with st.form("inputs"):
         for k in ["_gentamicin_result", "gentamicin_report"]:
             if k in st.session_state:
                 del st.session_state[k]
-        # Rerun to immediately reflect cleared UI
-        st.experimental_rerun()
+        # Set a one-time message flag (Streamlit will rerun the script after button callbacks)
+        st.session_state["_cleared_message"] = True
+        return
 
     _ = st.form_submit_button("Clear", on_click=_clear_inputs)
+
+# If we just cleared inputs, show a confirmation message once
+if st.session_state.pop("_cleared_message", False):
+    st.success("Inputs reset to defaults")
 
 if submitted:
     try:
