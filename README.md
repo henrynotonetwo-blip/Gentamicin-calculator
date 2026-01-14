@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Gentamicin Dose Calculator (public website)
 
 This repo contains:
@@ -30,3 +31,6 @@ You do **not** need to buy a domain first.
 
 You can buy a domain later and point it to your hosted app if your hosting provider supports custom domains.
 
+=======
+# Gentamicin-calculator
+>>>>>>> f9835a13e23b7431f17377449ea69a29ec1c3c33
